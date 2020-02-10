@@ -1,174 +1,63 @@
-//Defining UI vars
-const form = document.querySelector('#task-form');
-const taskList = document.querySelector('.collection');
-const clearBtn = document.querySelector('.clear-tasks');
-const filter = document.querySelector('#filter');
-const taskInput = document.querySelector('#task');
+// Variable initialization
+let min = 1,
+    max = 10,
+    winningNum = randomNum(min, max),
+    guessLeft = 3;
 
-//Load all event listener
-loadEventListeners();
-
-// Load all event listener function
-function loadEventListeners() {
-  // DOMload Event
-  document.addEventListener('DOMContentLoaded', getTasks);
-
-  // Add Task
-  form.addEventListener('submit', addTask);
-
-  // Remove Task
-  taskList.addEventListener('click', removeTask);
-
-  //Clear Tasklist
-  clearBtn.addEventListener('click', clearTasks);
-
-  //Filter task
-  filter.addEventListener('keyup', filterTasks);
-}
-
-// Get Task from LS
-function getTasks() {
-  let tasks = [];
-  if(localStorage.getItem('tasks') === null) {
-    tasks = [];
-  } else {
-    tasks = JSON.parse(localStorage.getItem('tasks'));
-  }
-  tasks.forEach(function(task) {
-     // Create Element li
-     let lis = document.createElement('li');
-
-     // Add class to li
-     lis.className = 'collection-item';
- 
-     // Add input task to li
-     let liText = lis.appendChild(document.createTextNode(task));
- 
-     // create a
-     const linkTag = document.createElement('a');
- 
-     // Add class to anchor
-     linkTag.className = 'delete-item secondary-content';
- 
-     // Add fontawsome icon in li
-     linkTag.innerHTML = '<i class="fa fa-remove"></i>';
- 
-     // Add link in li
-     lis.appendChild(linkTag);
-     
-     // Append li to ul
-     taskList.appendChild(lis);
- 
-  })
-}
-
-// Add Task
-function addTask(e) {
-  if (taskInput.value === '') {
-    alert('Please enter to add a task');
-  } else {
-    // Create Element li
-    let lis = document.createElement('li');
-
-    // Add class to li
-    lis.className = 'collection-item';
-
-    // Add input task to li
-    let liText = lis.appendChild(document.createTextNode(taskInput.value));
-
-    // create a
-    const linkTag = document.createElement('a');
-
-    // Add class to anchor
-    linkTag.className = 'delete-item secondary-content';
-
-    // Add fontawsome icon in li
-    linkTag.innerHTML = '<i class="fa fa-remove"></i>';
-
-    // Add link in li
-    lis.appendChild(linkTag);
+// Declaring varibales
+let minNum = document.querySelector('.min-num'),
+    maxNum = document.querySelector('.max-num'),
+    userInput = document.querySelector('#guess-input'),
+    userSubmit = document.querySelector('#guess-btn'),
+    userMessage = document.querySelector('.message'),
+    game = document.querySelector('#game');
     
-    // Append li to ul
-    taskList.appendChild(lis);
+// Dynamic Text
+minNum.textContent = min;
+maxNum.textContent = max;
 
-    // Local Storage Call
-    storeTaskInLocalStorage(taskInput.value);
-
-    //Clear task after submit
-    taskInput.value = '';
+// Game over 
+game.addEventListener('mousedown', function(e) {
+  if(e.target.className === 'play-again') {
+    window.location.reload();
   }
-  e.preventDefault();
-}
+});
 
-// Store Task
-function storeTaskInLocalStorage(task) {
-  let tasks = [];
-  if(localStorage.getItem('tasks') === null) {
-    tasks = [];
+// Listen Event
+userSubmit.addEventListener('click', function() {
+  userInputValue = parseInt(userInput.value);
+  // Input validation
+  if(isNaN(userInputValue) || userInputValue < min || userInputValue > max) {
+    setMessage(`Please enter a value between ${min} and ${max}`, 'red');
+  }
+  if (userInputValue === winningNum) {
+    userInput.disabled = true;
+    userInput.style.border = '1px solid green';
+    setMessage(`Congratualtions! ${winningNum} is correct. You Won...`, 'green');
+    userSubmit.value = 'Play again!';
+    userSubmit.className += 'play-again';
   } else {
-    tasks = JSON.parse(localStorage.getItem('tasks'));
-  }
-  tasks.push(task);
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-}
+    guessLeft-=1;
+    userInput.style.border = '1px solid red';
+    if(guessLeft > 0) {
+      setMessage(`Incorrect answer. Only ${guessLeft} chances are left. All the best.`, 'orange');
 
-// Remove task
-function removeTask(e) {
-  if (e.target.parentElement.classList.contains('delete-item')) {
-    if(confirm('Are you Sure?')) {
-      e.target.parentElement.parentElement.remove();
-
-      // Remove task from LS
-      removeTaskFromLocalStorage(e.target.parentElement.parentElement);
+    } else if (guessLeft === 0) {
+      setMessage(`Hard luck. Correct answer is ${winningNum}. Your game is over. Better luck next time.`, 'red');
+      userInput.disabled = true;
+      userSubmit.value = 'Play again!';
+      userSubmit.className += 'play-again';
     }
   }
+});
+
+// Message function
+function setMessage(msg, color) {
+  userMessage.style.color = color;
+  userMessage.textContent = msg;
 }
 
-// Remove task
-function removeTaskFromLocalStorage(taskItem) {
-  if(localStorage.getItem('tasks') === null) {
-    tasks = [];
-  } else {
-    tasks = JSON.parse(localStorage.getItem('tasks'));
-  }
-  tasks.forEach(function(task, index) {
-    if (taskItem.textContent == task) {
-      tasks.splice(index, 1);
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-  });
-}
-
-// Clear Tasks
-function clearTasks() {
-  // Method1
-  /*taskList.innerHTML = '';*/
-
-  // Method 2
-  while(taskList.firstChild) {
-    taskList.removeChild(taskList.firstChild);
-  }
-  clearTaskFromLocalStorage();
-}
-
-// Clear task from local storage
-function clearTaskFromLocalStorage() {
-  localStorage.clear();
-}
-
-// Filter Task
-function filterTasks(e) {
-  const text = e.target.value.toLowerCase();
-  document.querySelectorAll('.collection-item').forEach (function(task) {
-    // Text content changing to lowercase of foreach
-    const item = task.firstChild.textContent.toLowerCase();
-
-    // Matching typed input with existing tasks
-    if (item.indexOf(text) != -1) {
-      task.style.display = 'block';
-    }
-    else {
-      task.style.display = 'none';
-    }
-  });
+// Random number function
+function randomNum() {
+  return Math.floor(Math.random()*(max - min + 1) + min);
 }
